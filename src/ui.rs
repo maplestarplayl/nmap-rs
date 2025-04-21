@@ -162,6 +162,7 @@ fn popup(frame: &mut Frame, app: &mut App) {
         width: area.width / 2,
         height: area.height / 3,
     };
+    frame.render_widget(Clear, area);
     let text = match app.input_selected {
         0 => app.target_input.clone(),
         1 => app.port_input.clone(),
