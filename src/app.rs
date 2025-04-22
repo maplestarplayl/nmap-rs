@@ -67,7 +67,7 @@ impl App {
                 false => self.handle_events(timeout)?,
             }
             if self.ready_to_run {
-                self.targets.push(self.target_input.split(" ").collect());
+                self.target_input.split(" ").for_each(|s| self.targets.push(s.to_string()));
                 self.total_targets = self.targets.iter().map(|target| net::parse_cidr(target).unwrap().len()).sum();
                 self.ports = self.port_input.clone();
                 // clone data

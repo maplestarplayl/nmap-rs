@@ -4,11 +4,7 @@ use ratatui::{
 };
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
-    
     draw_first_tab(frame, app, frame.area());
-    if app.input_trigger {
-        popup(frame, app);
-    }
 }
 
 fn draw_first_tab(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -16,6 +12,7 @@ fn draw_first_tab(frame: &mut Frame, app: &mut App, area: Rect) {
         Constraint::Length(3),
         // Constraint::Min(8),
         Constraint::Length(10),
+        Constraint::Length(5),
         Constraint::Length(5)
     ])
     .split(area);
@@ -29,6 +26,9 @@ fn draw_first_tab(frame: &mut Frame, app: &mut App, area: Rect) {
     draw_charts(frame, app, chunk2[0]);
     draw_lists(frame, app, chunk2[1]);
     draw_input_box(frame, app, chunks[2]);
+    if app.input_trigger {
+        draw_popup(frame, app, chunks[3]);
+    }
 }
 
 fn draw_gauges(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -153,27 +153,35 @@ fn draw_input_box(frame: &mut Frame, app: &mut App, area: Rect) {
     frame.render_stateful_widget(input_list, area, &mut state);
 }
 
-fn popup(frame: &mut Frame, app: &mut App) {
-    let area = frame.area();
-
-    let popup_area = Rect {
-        x: area.width / 4,
-        y: area.height / 3,
-        width: area.width / 2,
-        height: area.height / 3,
-    };
-    frame.render_widget(Clear, area);
+fn draw_popup(frame: &mut Frame, app: &mut App, area: Rect) {
+    // let popup_area = Rect {
+    //     x: area.width / 4,
+    //     y: area.height / 3,
+    //     width: area.width / 2,
+    //     height: area.height / 3,
+    // };
+    // frame.render_widget(Clear, area);
     let text = match app.input_selected {
         0 => app.target_input.clone(),
         1 => app.port_input.clone(),
         _ => String::from("dsadsad"),
     };
     let block = popup_block(&text, app.input_selected);
-    let bad_popup = Paragraph::new(text.clone())
+    // let bad_popup = Paragraph::new(text.clone())
+    //     .wrap(Wrap { trim: true })
+    //     .style(Style::new().yellow().bg(Color::Black))
+    //     .block(block);
+    let bad_popup = Block::new()
+        .title("Input Box")
+        .title_style(Style::new().white().bold())
+        .borders(Borders::ALL)
+        .border_style(Style::new().red());
+
+    let paragraph = Paragraph::new(text.clone())
         .wrap(Wrap { trim: true })
         .style(Style::new().yellow().bg(Color::Black))
         .block(block);
-    frame.render_widget(bad_popup, popup_area); 
+    frame.render_widget(paragraph, area); 
 }
 
 fn get_memory_usage() -> f64 {
