@@ -46,7 +46,8 @@ pub async fn execute_scan(state: Arc<Mutex<Results>>, targets: Vec<String>, port
                 handles.push(handle);
             }
             false => {
-                println!("{}:{} is not reachable", ip, ports);
+                state.lock().unwrap().insert(ip.to_string(), Vec::new());
+                // println!("{}:{} is not reachable", ip, ports);
             }
         }
     }
@@ -66,9 +67,7 @@ async fn ping(ip: std::net::IpAddr) -> bool {
         Ok(_) => {
             true
         }
-        Err(e) => {
-            println!("Failed to ping {}", ip);
-            println!("{}", e);
+        Err(_) => {
             false
         }
     }
