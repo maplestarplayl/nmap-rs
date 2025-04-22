@@ -1,4 +1,4 @@
-use crate::app::{App, FocusZone};
+use crate::{app::{App, FocusZone}, net};
 use ratatui::{
     layout::{Constraint, Layout, Rect}, style::{Color, Modifier, Style, Stylize}, text::Line, widgets::{BarChart, Block, Borders, Clear, Gauge, List, ListState, Paragraph, Widget, Wrap}, Frame
 };
@@ -93,7 +93,7 @@ fn draw_lists(frame: &mut Frame, app: &mut App, area: Rect) {
                 .bg(Color::Black)
                 .add_modifier(Modifier::ITALIC),
         );
-    
+
     let target = app.targets.get(app.targets_selected);
     let data2 = match target {
         Some(target) => match app.port_results.get(target) {
@@ -168,16 +168,11 @@ fn popup(frame: &mut Frame, app: &mut App) {
         1 => app.port_input.clone(),
         _ => String::from("dsadsad"),
     };
-    let bad_popup = Paragraph::new(text)
+    let block = popup_block(&text, app.input_selected);
+    let bad_popup = Paragraph::new(text.clone())
         .wrap(Wrap { trim: true })
         .style(Style::new().yellow().bg(Color::Black))
-        .block(
-            Block::new()
-                .title("Input Box")
-                .title_style(Style::new().white().bold())
-                .borders(Borders::ALL)
-                .border_style(Style::new().red()),
-        );
+        .block(block);
     frame.render_widget(bad_popup, popup_area); 
 }
 
@@ -224,4 +219,44 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     );
     
     popup_rect
+}
+
+
+fn popup_block(text: &str, input_selected: usize) -> Block {
+    if input_selected == 1 {
+        return Block::new()
+        .title("Input Box")
+        .title_style(Style::new().white().bold())
+        .borders(Borders::ALL)
+        .border_style(Style::new().red())
+    }
+    let targets: Vec<&str> = text.split(" ").collect();
+    let mut error_index = 0;
+    let mut error = false;
+    targets.iter().enumerate().for_each(|(index, target)| {
+        match target.parse::<ipnetwork::IpNetwork>() {
+            Ok(_) => {
+                
+            },
+            Err(e) => {
+                error_index = index;
+                error = true;
+            },
+        }
+    });
+
+    if error {
+        Block::new()
+            .title("Input Box")
+            .title_style(Style::new().white().bold())
+            .borders(Borders::ALL)
+            .border_style(Style::new().red())
+            .title_bottom(format!("Invalid IP address {}", targets[error_index]))
+    } else {
+        Block::new()
+            .title("Input Box")
+            .title_style(Style::new().white().bold())
+            .borders(Borders::ALL)
+            .border_style(Style::new().red())
+    }
 }

@@ -192,14 +192,21 @@ impl App {
                     KeyCode::Enter => {
                         self.input_trigger = !self.input_trigger;
                         self.input_mode = false;
-                    }
+                    },
                     KeyCode::Char(c) => {
                         match self.input_selected {
                             0 => self.target_input.push(c),
                             1 => self.port_input.push(c),
                             _ => {}
                         }
-                    }
+                    },
+                    KeyCode::Backspace => {
+                        match self.input_selected {
+                            0 => self.target_input.pop(),
+                            1 => self.port_input.pop(),
+                            _ => Option::None
+                        };
+                    },
                     _ => {}
                 }
             },
