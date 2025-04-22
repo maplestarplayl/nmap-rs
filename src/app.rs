@@ -187,7 +187,7 @@ impl App {
     fn handle_input_events(&mut self) -> io::Result<()> {
         let key = event::read()?;
         match key {
-            Event::Key(key_event) => {
+            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 match key_event.code {
                     KeyCode::Enter => {
                         self.input_trigger = !self.input_trigger;
