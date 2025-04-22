@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}, time::Instant};
+use std::{collections::HashMap, fmt::format, sync::{Arc, Mutex}, time::Instant};
 
 use crate::scan::{ self, ScanResult};
 
@@ -46,7 +46,7 @@ pub async fn execute_scan(state: Arc<Mutex<Results>>, targets: Vec<String>, port
                 handles.push(handle);
             }
             false => {
-                state.lock().unwrap().insert(ip.to_string(), Vec::new());
+                state.lock().unwrap().insert(format!("{} is not reachable", ip), Vec::new());
                 // println!("{}:{} is not reachable", ip, ports);
             }
         }
