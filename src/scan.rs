@@ -1,4 +1,4 @@
-use std::net::{IpAddr, SocketAddr};
+use std::{net::{IpAddr, SocketAddr}, time::Duration};
 
 use ratatui::text::Text;
 use tokio::net::TcpSocket;
@@ -19,12 +19,15 @@ pub async fn scan_port(ip: IpAddr, port: u16) -> ScanResult {
     let socket_addr = SocketAddr::new(ip, port);
     let socket = TcpSocket::new_v4().unwrap();
     match socket.connect(socket_addr).await {
-        Ok(_) => ScanResult {
-            port,
-            is_open: true,
+        Ok(_) => {
+            // println!("{}:{} is open", ip, port);
+            ScanResult {
+                port,
+                is_open: true,
+            }
         },
-        Err(e) => {
-            println!("{}", e);
+        Err(_) => {
+            // println!("{}:{} is closed", ip, port);
             ScanResult {
                 port,
                 is_open: false,
@@ -34,12 +37,44 @@ pub async fn scan_port(ip: IpAddr, port: u16) -> ScanResult {
 }
 
 pub async fn scan_ports(ip: IpAddr, ports: &str) -> Vec<ScanResult> {
-    let ports = parse_ports_range(ports);
-    let mut results = Vec::new();
-    for port in ports {
-        results.push(scan_port(ip, port).await);
+    let ports_vec = parse_ports_range(ports);
+    
+    // create multiple concurrent tasks
+    let mut handles = Vec::new();
+    for port in ports_vec {
+        let handle = tokio::spawn(async move {
+            scan_port_with_timeout(ip, port, Duration::from_millis(500)).await
+        });
+        handles.push(handle);
     }
+    
+    // wait for all port scanning tasks to complete
+    let mut results = Vec::new();
+    for handle in handles {
+        if let Ok(result) = handle.await {
+            results.push(result);
+        }
+    }
+    
     results
+}
+
+pub async fn scan_port_with_timeout(ip: IpAddr, port: u16, timeout: Duration) -> ScanResult {
+    let socket_addr = SocketAddr::new(ip, port);
+    let socket = TcpSocket::new_v4().unwrap();
+    
+    // use tokio::time::timeout to limit the connection attempt time
+    match tokio::time::timeout(timeout, socket.connect(socket_addr)).await {
+        Ok(Ok(_)) => {
+            // println!("{}:{} is open", ip, port);
+            ScanResult { port, is_open: true }
+        },
+        _ => {
+            // timeout or connection error, consider the port as closed
+            // println!("{}:{} is closed", ip, port);
+            ScanResult { port, is_open: false }
+        }
+    }
 }
 
 fn parse_ports_range(ports: &str) -> Vec<u16> {

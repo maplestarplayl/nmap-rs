@@ -29,6 +29,7 @@ pub struct App {
     pub target_input: String,
     pub port_input: String,
     pub total_targets: usize,
+    pub complete_time: Arc<Mutex<Duration>>
 }
 
 impl App {
@@ -50,6 +51,7 @@ impl App {
             target_input: String::new(),
             port_input: String::new(),
             total_targets: 0,
+            complete_time: Arc::new(Mutex::new(Duration::from_millis(0)))
         }
     }
 
@@ -60,6 +62,7 @@ impl App {
             if self.total_targets > 0 {
                 self.progress = self.state.lock().unwrap().len() as f32 / self.total_targets as f32;
             }
+                
             terminal.draw(|frame| draw(frame, self))?;
             let timeout = TICK_TIME.saturating_sub(last_tick.elapsed());
             match self.input_mode {
@@ -68,16 +71,17 @@ impl App {
             }
             if self.ready_to_run {
                 self.target_input.split(" ").for_each(|s| self.targets.push(s.to_string()));
-                self.total_targets = self.targets.iter().map(|target| net::parse_cidr(target).unwrap().len()).sum();
+                self.total_targets = self.targets.iter().map(|target| net::parse_cidr(target).expect("Invalid IP address").len()).sum();
                 self.ports = self.port_input.clone();
                 // clone data
                 let state = self.state.clone();
                 let targets = self.targets.clone();
+                let time = self.complete_time.clone();
                 let ports = self.ports.clone(); 
                 std::thread::spawn(move || {
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     rt.block_on(async {
-                        net::execute_scan(state, targets, ports).await;
+                        net::execute_scan(state, targets, ports, time).await;
                     });
                 });
                 self.ready_to_run = false;

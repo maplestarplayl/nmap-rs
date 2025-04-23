@@ -15,11 +15,6 @@ struct Progress {
 fn main() -> io::Result<()> {
     
     let shared_state = Arc::new(Mutex::new(Results::new()));
-    
-    // let rt = tokio::runtime::Runtime::new().unwrap();
-    // rt.block_on(async {
-    //     net::execute_scan(Cli::parse(), shared_state.clone()).await;
-    // });
 
     let mut terminal = ratatui::init();
     let app_result = App::init(shared_state.clone()).run(&mut terminal);
