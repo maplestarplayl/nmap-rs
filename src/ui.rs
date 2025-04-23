@@ -32,15 +32,13 @@ fn draw_first_tab(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn draw_gauges(frame: &mut Frame, app: &mut App, area: Rect) {
-    // let block = Block::bordered().title("Graphs");
-    // frame.render_widget(block, area);
-
-    // let rand = rand::random::<f64>();
-    let label = format!("{:.2}%", app.progress * 100.0);
-    let gauge = Gauge::default()
-        .block(Block::bordered().title("Gauge:"))
-        .gauge_style(
-            Style::default()
+    let time = app.complete_time.lock().unwrap().as_millis();
+    if time > 0 {
+        let label = format!("{:.2}%", app.progress * 100.0);
+        let gauge = Gauge::default()
+            .block(Block::bordered().title("Gauge:").title_bottom(format!("Time : {} ms", time)))
+            .gauge_style(
+                Style::default()
                 .fg(Color::Magenta)
                 .bg(Color::Black)
                 .add_modifier(Modifier::ITALIC | Modifier::BOLD),
@@ -48,7 +46,21 @@ fn draw_gauges(frame: &mut Frame, app: &mut App, area: Rect) {
         // .use_unicode(app.enhanced_graphics)
         .label(label)
         .ratio(app.progress.into());
-    frame.render_widget(gauge, area);
+        frame.render_widget(gauge, area);
+    } else {
+        let label = format!("{:.2} %", app.progress * 100.0);
+        let gauge = Gauge::default()
+            .block(Block::bordered().title("Gauge: "))
+            .gauge_style(
+                Style::default()
+                    .fg(Color::Magenta)
+                    .bg(Color::Black)
+                    .add_modifier(Modifier::ITALIC | Modifier::BOLD),
+            )
+            .label(label)
+            .ratio(app.progress.into());
+        frame.render_widget(gauge, area);
+    }
 }
 
 fn draw_charts(frame: &mut Frame, _app: &mut App, area: Rect) {
